@@ -41,24 +41,47 @@ list (for apps that need a window title to disambiguate, like browser tabs)
 and a larger `classRules` list (matched and cached by window class). Add or
 reorder entries there and save; the shell hot-reloads plugin QML on change.
 
-### Your own icon overrides
+### Adding your own icons
 
-Rather than editing `IconRules.js`, point the "Custom icon rules file"
-setting at a JSON file of your own, for example
-`~/.config/omarchy/omaspaces-icons.json`:
+You don't need to edit `IconRules.js` (or fork the plugin) to add or change
+an icon — point the widget at your own small JSON file instead:
 
-```json
-[
-  { "match": "claude-code|claude", "icon": "" },
-  { "match": "my-internal-app", "icon": "󰀻" }
-]
-```
+1. **Find the window's class or title.** With the app open, run:
 
-Each entry's `match` is a case-insensitive regular expression tested against
-both the window class and title; the first match wins. Overrides are checked
-before the built-in rules, so they can also be used to replace a built-in
-icon you don't like. The file is watched and reloads automatically on save —
-no restart needed.
+   ```sh
+   hyprctl clients | grep -A2 'class:'
+   ```
+
+   Note the `class:` value (and `title:` if the class is too generic, like a
+   browser).
+
+2. **Pick a glyph.** Grab one from the
+   [Nerd Fonts cheat sheet](https://www.nerdfonts.com/cheat-sheet) — search
+   for the app name, click a glyph to copy it.
+
+3. **Create the rules file**, e.g. `~/.config/omarchy/omaspaces-icons.json`:
+
+   ```json
+   [
+     { "match": "claude-code|claude", "icon": "" },
+     { "match": "my-internal-app", "icon": "󰀻" }
+   ]
+   ```
+
+   Each entry's `match` is a case-insensitive regular expression tested
+   against both the window class and title; the first match in the file
+   wins. Since these are checked *before* the built-in rules, the same
+   mechanism also lets you replace a built-in icon you don't like.
+
+4. **Point the widget at the file**, either through the widget's settings
+   panel ("Custom icon rules file") or from the CLI:
+
+   ```sh
+   omarchy bar set lobo.omaspaces iconOverridesPath ~/.config/omarchy/omaspaces-icons.json
+   ```
+
+The file is watched and re-applied automatically whenever you save it — no
+reload or restart needed.
 
 ## Removal
 
