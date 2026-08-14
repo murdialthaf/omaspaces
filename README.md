@@ -1,9 +1,18 @@
 # Omaspaces
 
-Hyprland workspace indicators for the Omarchy bar, with per-app window icons
-and a full set of layout and styling options.
+Configurable Hyprland workspace indicators for the [Omarchy](https://omarchy.org/) bar: each pill shows the workspace number plus a glyph for every open window's app, with layout, sizing, and icon rules you control.
 
 ![preview](preview.png)
+
+## What you see
+
+- **Pills** — one per workspace, numbered, holding a small glyph for each open
+  window's app (capped, with a `+N` overflow past the limit).
+- **Active state** — the focused (or urgent) workspace gets a soft background
+  fill in your accent color; nothing else changes shape.
+- **Click** a pill to focus that workspace; **scroll** over any pill to step
+  to the next/previous one; **hover** for a tooltip listing that workspace's
+  open window titles.
 
 ## Requirements
 
@@ -19,7 +28,16 @@ omarchy bar put lobo.omaspaces --section center
 
 ## Configuration
 
-Open the widget's settings from the bar's widget settings panel to adjust:
+Open the widget's settings from the bar's widget settings panel, or set a key
+directly with `omarchy bar set lobo.omaspaces <key> <value>`. Booleans and
+numbers need `--json`, or they're written to `shell.json` as plain strings —
+which for a boolean means `false` (the string) is truthy, silently turning
+the setting *on*:
+
+```sh
+omarchy bar set lobo.omaspaces compact true --json
+omarchy bar set lobo.omaspaces workspaceCount 6 --json
+```
 
 | Setting | Description |
 |---|---|
