@@ -72,6 +72,8 @@ editing required:
 3. Click **Add**. It applies immediately and is saved to the "Custom icon
    rules file" path above.
 
+![Icon rules editor, adding a DBeaver rule](custom_example.png)
+
 Existing rules are listed below the form with a **✕** to remove them. Since
 these are checked *before* the built-in rules, the editor also doubles as
 the way to replace a built-in icon you don't like.
