@@ -11,16 +11,31 @@ BarWidget {
   id: root
   moduleName: "lobo.omaspaces"
 
+  // Settings written via `omarchy bar set` without `--json` land in
+  // shell.json as plain strings (e.g. "false"), and QML's own string->bool
+  // coercion treats any non-empty string as true — so a bare `setting()`
+  // read would silently flip a boolean on. Style.qml's own boolToken()
+  // has the same guard for the same reason; mirrored here for settings we
+  // read ourselves.
+  function boolSetting(key, fallback) {
+    var value = root.setting(key, fallback)
+    if (typeof value === "boolean") return value
+    var s = String(value).trim().toLowerCase()
+    if (s === "true" || s === "1" || s === "yes" || s === "on") return true
+    if (s === "false" || s === "0" || s === "no" || s === "off") return false
+    return fallback
+  }
+
   // -------------------------------------------------------------- settings
-  readonly property bool showIcons: root.setting("showIcons", true)
-  readonly property bool showNumbers: root.setting("showNumbers", true)
+  readonly property bool showIcons: root.boolSetting("showIcons", true)
+  readonly property bool showNumbers: root.boolSetting("showNumbers", true)
   readonly property int workspaceCount: Util.clamp(Math.round(Number(root.setting("workspaceCount", 5))), 1, 10)
   readonly property int maxWorkspaceId: Math.max(root.workspaceCount, Util.clamp(Math.round(Number(root.setting("maxWorkspaceId", 10))), 1, 10))
-  readonly property bool hideEmpty: root.setting("hideEmpty", false)
+  readonly property bool hideEmpty: root.boolSetting("hideEmpty", false)
   readonly property int iconLimit: Util.clamp(Math.round(Number(root.setting("iconLimit", 4))), 1, 8)
   readonly property string accentSource: root.setting("accentSource", "Accent")
-  readonly property bool compact: root.setting("compact", false)
-  readonly property bool showTooltip: root.setting("showTooltip", true)
+  readonly property bool compact: root.boolSetting("compact", false)
+  readonly property bool showTooltip: root.boolSetting("showTooltip", true)
   readonly property string iconOverridesPath: String(root.setting("iconOverridesPath", ""))
 
   readonly property color fgColor: root.bar ? root.bar.barForeground : Color.foreground
