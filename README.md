@@ -26,13 +26,22 @@ omarchy plugin add https://github.com/DanielLob-o/Omaspaces.git --enable
 omarchy bar put lobo.omaspaces --section center
 ```
 
+Omarchy's built-in `omarchy.workspaces` widget is often already on the bar
+too, which means you'll see two workspace indicators side by side until you
+disable it:
+
+```sh
+omarchy plugin disable omarchy.workspaces
+```
+
 ## Configuration
 
-Open the widget's settings from the bar's widget settings panel, or set a key
-directly with `omarchy bar set lobo.omaspaces <key> <value>`. Booleans and
-numbers need `--json`, or they're written to `shell.json` as plain strings —
-which for a boolean means `false` (the string) is truthy, silently turning
-the setting *on*:
+Omarchy doesn't have a settings-panel GUI for bar widgets yet — set a key
+with `omarchy bar set lobo.omaspaces <key> <value>`, which writes it to the
+widget's entry in `~/.config/omarchy/shell.json` (hand-editing that file
+works too, and hot-reloads on save). Booleans and numbers need `--json`, or
+they're written as plain strings — which for a boolean means `false` (the
+string) is truthy, silently turning the setting *on*:
 
 ```sh
 omarchy bar set lobo.omaspaces compact true --json
