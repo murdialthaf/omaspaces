@@ -346,7 +346,13 @@ BarWidget {
 
   function openRulesEditor(workspace) {
     var tops = workspace && workspace.toplevels ? workspace.toplevels.values : []
-    root.rulesEditorPrefill = tops.length > 0 ? root.toplevelClass(tops[0]) : ""
+    var cls = tops.length > 0 ? root.toplevelClass(tops[0]) : ""
+    root.rulesEditorPrefill = cls
+    // onOpenChanged only fires on the open/close transition, so re-opening
+    // via a different pill while the popup is already up needs a direct
+    // set here too, or the pattern field would keep showing the first
+    // pill's prefill.
+    if (root.rulesEditorOpen) patternField.text = cls
     root.rulesEditorOpen = true
   }
 
