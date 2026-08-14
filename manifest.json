@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "lobo.omaspaces",
   "name": "Omaspaces",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Daniel Lobo",
   "license": "MIT",
-  "description": "Configurable Hyprland workspace indicators with per-app window icons, adjustable layout, and an active-workspace style you control.",
+  "description": "Configurable Hyprland workspace indicators with per-app window icons, adjustable layout, and an in-widget editor for your own icon rules.",
   "kinds": [
     "bar-widget"
   ],
@@ -14,7 +14,7 @@
   },
   "barWidget": {
     "displayName": "Omaspaces",
-    "description": "Workspace indicators with per-app icons for open windows, plus layout and styling options.",
+    "description": "Workspace indicators with per-app icons for open windows. Right-click a pill to add your own icon rules, plus layout and styling options.",
     "category": "Compositor",
     "allowMultiple": false,
     "defaultSection": "center",
@@ -42,7 +42,7 @@
         "key": "showNumbers",
         "type": "boolean",
         "label": "Show workspace numbers",
-        "description": "Show the workspace number (or the active-workspace marker). Turned off, an icon-only pill still falls back to numbers when app icons are also off.",
+        "description": "Show the workspace number. Turned off, an icon-only pill still falls back to numbers when app icons are also off.",
         "defaultValue": true
       },
       {
