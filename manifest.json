@@ -28,7 +28,7 @@
       "accentSource": "Accent",
       "compact": false,
       "showTooltip": true,
-      "iconOverridesPath": ""
+      "iconOverridesPath": "~/.config/omarchy/omaspaces-icons.json"
     },
     "schema": [
       {
@@ -108,8 +108,8 @@
         "key": "iconOverridesPath",
         "type": "path",
         "label": "Custom icon rules file",
-        "description": "Optional path to a JSON file of [{\"match\": \"regex\", \"icon\": \"glyph\"}, ...] rules, checked before the built-in icon list. Supports ~ and $HOME. Reloads automatically when the file changes.",
-        "defaultValue": ""
+        "description": "Path to a JSON file of [{\"match\": \"regex\", \"icon\": \"glyph\"}, ...] rules, checked before the built-in icon list. Right-click any workspace pill to add rules through a UI instead of editing this file by hand. Supports ~ and $HOME. Reloads automatically when the file changes.",
+        "defaultValue": "~/.config/omarchy/omaspaces-icons.json"
       }
     ]
   }

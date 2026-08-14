@@ -12,7 +12,7 @@ Configurable Hyprland workspace indicators for the [Omarchy](https://omarchy.org
   fill in your accent color; nothing else changes shape.
 - **Click** a pill to focus that workspace; **scroll** over any pill to step
   to the next/previous one; **hover** for a tooltip listing that workspace's
-  open window titles.
+  open window titles; **right-click** to open the icon rules editor.
 
 ## Requirements
 
@@ -50,7 +50,7 @@ omarchy bar set lobo.omaspaces workspaceCount 6 --json
 | Active color | `Accent`, `Urgent`, or `Foreground` palette role, shown as a soft background fill on the focused (or urgent) workspace |
 | Compact spacing | Tighter padding/gaps between pills |
 | Show window titles on hover | Tooltip listing the pill's open window titles |
-| Custom icon rules file | Path to a JSON file of your own icon overrides (see below) |
+| Custom icon rules file | Path to the JSON file the icon rules editor (below) reads and writes; defaults to `~/.config/omarchy/omaspaces-icons.json` |
 
 ### Built-in icon rules
 
@@ -61,45 +61,44 @@ reorder entries there and save; the shell hot-reloads plugin QML on change.
 
 ### Adding your own icons
 
-You don't need to edit `IconRules.js` (or fork the plugin) to add or change
-an icon — point the widget at your own small JSON file instead:
+**Right-click any workspace pill** to open the icon rules editor — no file
+editing required:
 
-1. **Find the window's class or title.** With the app open, run:
-
-   ```sh
-   hyprctl clients | grep -A2 'class:'
-   ```
-
-   Note the `class:` value (and `title:` if the class is too generic, like a
-   browser).
-
-2. **Pick a glyph.** Grab one from the
+1. Pick an app from the dropdown (populated from your currently open
+   windows), or just type a pattern by hand.
+2. Paste an icon glyph. Grab one from the
    [Nerd Fonts cheat sheet](https://www.nerdfonts.com/cheat-sheet) — search
    for the app name, click a glyph to copy it.
+3. Click **Add**. It applies immediately and is saved to the "Custom icon
+   rules file" path above.
 
-3. **Create the rules file**, e.g. `~/.config/omarchy/omaspaces-icons.json`:
+Existing rules are listed below the form with a **✕** to remove them. Since
+these are checked *before* the built-in rules, the editor also doubles as
+the way to replace a built-in icon you don't like.
 
-   ```json
-   [
-     { "match": "claude-code|claude", "icon": "" },
-     { "match": "my-internal-app", "icon": "󰀻" }
-   ]
-   ```
+#### Editing the file directly
 
-   Each entry's `match` is a case-insensitive regular expression tested
-   against both the window class and title; the first match in the file
-   wins. Since these are checked *before* the built-in rules, the same
-   mechanism also lets you replace a built-in icon you don't like.
+The editor is just a UI over a plain JSON file, so you can also hand-edit
+it (or manage it with your own tooling/dotfiles):
 
-4. **Point the widget at the file**, either through the widget's settings
-   panel ("Custom icon rules file") or from the CLI:
+```json
+[
+  { "match": "claude-code|claude", "icon": "" },
+  { "match": "my-internal-app", "icon": "󰀻" }
+]
+```
 
-   ```sh
-   omarchy bar set lobo.omaspaces iconOverridesPath ~/.config/omarchy/omaspaces-icons.json
-   ```
+Each entry's `match` is a case-insensitive regular expression tested
+against both the window class and title; the first match in the file wins.
+The file is watched and re-applied automatically whenever it changes — no
+reload or restart needed, whether you edited it by hand or through the
+in-widget editor.
 
-The file is watched and re-applied automatically whenever you save it — no
-reload or restart needed.
+If a window's class isn't obvious from the app picker, find it with:
+
+```sh
+hyprctl clients | grep -A2 'class:'
+```
 
 ## Removal
 
