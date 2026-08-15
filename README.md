@@ -48,18 +48,18 @@ omarchy bar set lobo.omaspaces compact true --json
 omarchy bar set lobo.omaspaces workspaceCount 6 --json
 ```
 
-| Setting | Description |
-|---|---|
-| Show app icons | Render a glyph per open window inside its workspace pill |
-| Show workspace numbers | Show the workspace number |
-| Base workspace count | Workspaces always shown, even empty |
-| Highest workspace shown | Ceiling for extra workspaces that appear once occupied |
-| Hide empty extra workspaces | Drop (rather than dim) empty workspaces above the base count |
-| Max icons per workspace | Caps icons per pill before collapsing into a `+N` |
-| Active color | `Accent`, `Urgent`, or `Foreground` palette role, shown as a soft background fill on the focused (or urgent) workspace |
-| Compact spacing | Tighter padding/gaps between pills |
-| Show window titles on hover | Tooltip listing the pill's open window titles |
-| Custom icon rules file | Path to the JSON file the icon rules editor (below) reads and writes; defaults to `~/.config/omarchy/omaspaces-icons.json` |
+| Setting | Key | Description |
+|---|---|---|
+| Show app icons | `showIcons` | Render a glyph per open window inside its workspace pill |
+| Show workspace numbers | `showNumbers` | Show the workspace number |
+| Base workspace count | `workspaceCount` | Workspaces always shown, even empty |
+| Highest workspace shown | `maxWorkspaceId` | Ceiling for extra workspaces that appear once occupied |
+| Hide empty extra workspaces | `hideEmpty` | Drop (rather than dim) empty workspaces above the base count |
+| Max icons per workspace | `iconLimit` | Caps icons per pill before collapsing into a `+N` |
+| Active color | `accentSource` | `Accent`, `Urgent`, or `Foreground` palette role, shown as a soft background fill on the focused (or urgent) workspace |
+| Compact spacing | `compact` | Tighter padding/gaps between pills |
+| Show window titles on hover | `showTooltip` | Tooltip listing the pill's open window titles |
+| Custom icon rules file | `iconOverridesPath` | Path to the JSON file the icon rules editor (below) reads and writes; defaults to `~/.config/omarchy/omaspaces-icons.json` |
 
 ### Built-in icon rules
 
