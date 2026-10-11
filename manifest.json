@@ -1,11 +1,21 @@
 {
   "schemaVersion": 1,
-  "id": "lobo.omaspaces",
-  "name": "Omaspaces",
-  "version": "1.1.0",
-  "author": "Daniel Lobo",
+  "id": "murdi.omaspaces",
+  "name": "Dynamic Omaspaces",
+  "version": "1.0.0",
+  "author": "Murdi Althaf",
   "license": "MIT",
-  "description": "Configurable Hyprland workspace indicators with per-app window icons, adjustable layout, and an in-widget editor for your own icon rules.",
+  "homepage": "https://github.com/murdialthaf/omaspaces",
+  "repository": "https://github.com/murdialthaf/omaspaces",
+  "description": "Hyprland workspace pills that appear only for workspaces in use on the current monitor, each showing a Nerd Font icon for every open app. Ships icon rules for common apps and Omarchy web apps, and reads your own rules from a JSON file. Based on Omaspaces by Daniel Lobo.",
+  "keywords": [
+    "workspaces",
+    "hyprland",
+    "icons",
+    "nerd-font",
+    "dynamic",
+    "omaspaces"
+  ],
   "kinds": [
     "bar-widget"
   ],
@@ -13,21 +23,17 @@
     "barWidget": "BarWidget.qml"
   },
   "barWidget": {
-    "displayName": "Omaspaces",
-    "description": "Workspace indicators with per-app icons for open windows. Right-click a pill to add your own icon rules, plus layout and styling options.",
+    "displayName": "Dynamic Omaspaces",
+    "description": "Pills only for workspaces in use on this monitor, with an icon per open app. Click to switch; scroll to cycle.",
     "category": "Compositor",
     "allowMultiple": false,
     "defaultSection": "center",
     "defaults": {
       "showIcons": true,
       "showNumbers": true,
-      "workspaceCount": 5,
-      "maxWorkspaceId": 10,
-      "hideEmpty": false,
       "iconLimit": 4,
       "accentSource": "Accent",
       "compact": false,
-      "showTooltip": true,
       "iconOverridesPath": "~/.config/omarchy/omaspaces-icons.json"
     },
     "schema": [
@@ -35,48 +41,21 @@
         "key": "showIcons",
         "type": "boolean",
         "label": "Show app icons",
-        "description": "Render a glyph for each open window's app inside its workspace pill.",
+        "description": "Draw a glyph for each open window's app inside its workspace pill.",
         "defaultValue": true
       },
       {
         "key": "showNumbers",
         "type": "boolean",
         "label": "Show workspace numbers",
-        "description": "Show the workspace number. Turned off, an icon-only pill still falls back to numbers when app icons are also off.",
+        "description": "Show the workspace number. If app icons are also off, pills show numbers anyway.",
         "defaultValue": true
-      },
-      {
-        "key": "workspaceCount",
-        "type": "integer",
-        "label": "Base workspace count",
-        "description": "Workspaces always shown, even when empty.",
-        "min": 1,
-        "max": 10,
-        "step": 1,
-        "defaultValue": 5
-      },
-      {
-        "key": "maxWorkspaceId",
-        "type": "integer",
-        "label": "Highest workspace shown",
-        "description": "Workspaces above the base count are shown only up to this id, and only once they have a window.",
-        "min": 1,
-        "max": 10,
-        "step": 1,
-        "defaultValue": 10
-      },
-      {
-        "key": "hideEmpty",
-        "type": "boolean",
-        "label": "Hide empty extra workspaces",
-        "description": "Beyond the base count, drop workspaces entirely once their last window closes instead of leaving a dimmed placeholder.",
-        "defaultValue": false
       },
       {
         "key": "iconLimit",
         "type": "integer",
         "label": "Max icons per workspace",
-        "description": "Caps how many app icons a single pill draws before collapsing the rest into a +N count.",
+        "description": "How many app icons a pill draws before folding the rest into a +N count.",
         "min": 1,
         "max": 8,
         "step": 1,
@@ -86,7 +65,7 @@
         "key": "accentSource",
         "type": "enum",
         "label": "Active color",
-        "description": "Palette role used to tint the active-workspace highlight.",
+        "description": "Theme color used to highlight the active workspace.",
         "options": ["Accent", "Urgent", "Foreground"],
         "defaultValue": "Accent"
       },
@@ -98,17 +77,10 @@
         "defaultValue": false
       },
       {
-        "key": "showTooltip",
-        "type": "boolean",
-        "label": "Show window titles on hover",
-        "description": "Hovering a workspace pill lists the titles of its open windows.",
-        "defaultValue": true
-      },
-      {
         "key": "iconOverridesPath",
         "type": "path",
         "label": "Custom icon rules file",
-        "description": "Path to a JSON file of [{\"match\": \"regex\", \"icon\": \"glyph\"}, ...] rules, checked before the built-in icon list. Right-click any workspace pill to add rules through a UI instead of editing this file by hand. Supports ~ and $HOME. Reloads automatically when the file changes.",
+        "description": "JSON file of [{\"match\": \"regex\", \"icon\": \"glyph\"}, ...] rules, matched against window class and title before the built-in list. Supports ~ and $HOME, and reloads when the file changes.",
         "defaultValue": "~/.config/omarchy/omaspaces-icons.json"
       }
     ]

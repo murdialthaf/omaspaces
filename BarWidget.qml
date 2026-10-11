@@ -9,7 +9,7 @@ import "IconRules.js" as IconRules
 
 BarWidget {
   id: root
-  moduleName: "lobo.omaspaces"
+  moduleName: "murdi.omaspaces"
 
   // Settings written via `omarchy bar set` without `--json` land in
   // shell.json as plain strings (e.g. "false"), and QML's own string->bool
@@ -29,13 +29,9 @@ BarWidget {
   // -------------------------------------------------------------- settings
   readonly property bool showIcons: root.boolSetting("showIcons", true)
   readonly property bool showNumbers: root.boolSetting("showNumbers", true)
-  readonly property int workspaceCount: Util.clamp(Math.round(Number(root.setting("workspaceCount", 5))), 1, 10)
-  readonly property int maxWorkspaceId: Math.max(root.workspaceCount, Util.clamp(Math.round(Number(root.setting("maxWorkspaceId", 10))), 1, 10))
-  readonly property bool hideEmpty: root.boolSetting("hideEmpty", false)
   readonly property int iconLimit: Util.clamp(Math.round(Number(root.setting("iconLimit", 4))), 1, 8)
   readonly property string accentSource: root.setting("accentSource", "Accent")
   readonly property bool compact: root.boolSetting("compact", false)
-  readonly property bool showTooltip: root.boolSetting("showTooltip", true)
   readonly property string iconOverridesPath: String(root.setting("iconOverridesPath", "~/.config/omarchy/omaspaces-icons.json"))
 
   readonly property color fgColor: root.bar ? root.bar.barForeground : Color.foreground
@@ -64,31 +60,29 @@ BarWidget {
     return null
   }
 
-  function isOccupied(workspace) {
-    return workspace !== null && workspace.toplevels && workspace.toplevels.values.length > 0
+  // Only workspaces in use (or focused) on the focused monitor get a pill,
+  // so the row grows and shrinks with what's open instead of reserving
+  // slots for empty workspaces.
+  function workspaceIds() {
+    var monitor = Hyprland.focusedMonitor
+    var values = Hyprland.workspaces.values
+    var ids = []
+
+    for (var i = 0; i < values.length; i++) {
+      var workspace = values[i]
+      if (workspace.id <= 0) continue
+      if (monitor && workspace.monitor !== monitor) continue
+      if (workspace.focused || workspace.toplevels.values.length > 0) {
+        ids.push(workspace.id)
+      }
+    }
+
+    ids.sort(function(left, right) { return left - right })
+    return ids
   }
 
-  // Base workspaces always appear; anything above that only appears once
-  // Hyprland reports it (i.e. it has, or has had, a window), and drops back
-  // out once empty if hideEmpty is on.
-  function visibleWorkspaceIds() {
-    var ids = []
-    for (var n = 1; n <= root.workspaceCount; n++) ids.push(n)
-
-    var values = Hyprland.workspaces.values
-    for (var i = 0; i < values.length; i++) {
-      var id = values[i].id
-      if (id > 0 && id <= root.maxWorkspaceId && ids.indexOf(id) === -1) ids.push(id)
-    }
-    ids.sort(function (a, b) { return a - b })
-
-    if (!root.hideEmpty) return ids
-
-    var focusedId = Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : -1
-    return ids.filter(function (id) {
-      if (id <= root.workspaceCount || id === focusedId) return true
-      return root.isOccupied(root.workspaceById(id))
-    })
+  function isOccupied(workspace) {
+    return workspace !== null && workspace.toplevels && workspace.toplevels.values.length > 0
   }
 
   function focusWorkspace(id) {
@@ -116,13 +110,9 @@ BarWidget {
 
   // User-supplied overrides, checked ahead of every built-in rule so someone
   // can pin an icon for an app the built-in list gets wrong (or misses)
-  // without forking IconRules.js. Kept as two arrays deliberately: entries
-  // is the plain-object form that's serialized to disk and driven by the
-  // editor UI below; customIconRules is compiled from it (regex objects
-  // aren't JSON-serializable, so the two can't be the same array). Scanning
-  // it fresh on every icon lookup costs nothing at this size — it's a
-  // handful of user-curated rules, not the built-in list.
-  property var iconOverrideEntries: []
+  // without forking IconRules.js. Scanning it fresh on every icon lookup
+  // costs nothing at this size — it's a handful of user-curated rules, not
+  // the built-in list.
   property var customIconRules: []
 
   function parseIconOverrideEntries(raw) {
@@ -132,7 +122,7 @@ BarWidget {
     try {
       parsed = JSON.parse(text)
     } catch (e) {
-      console.warn("lobo.omaspaces: iconOverridesPath is not valid JSON: " + e)
+      console.warn("murdi.omaspaces: iconOverridesPath is not valid JSON: " + e)
       return []
     }
     if (!Array.isArray(parsed)) return []
@@ -155,14 +145,13 @@ BarWidget {
       try {
         out.push({ re: new RegExp(entries[i].match, "i"), icon: entries[i].icon })
       } catch (e) {
-        console.warn("lobo.omaspaces: skipping invalid icon override pattern " + JSON.stringify(entries[i].match))
+        console.warn("murdi.omaspaces: skipping invalid icon override pattern " + JSON.stringify(entries[i].match))
       }
     }
     return out
   }
 
   function applyIconOverrideEntries(entries) {
-    root.iconOverrideEntries = entries
     root.customIconRules = root.compileIconOverrideEntries(entries)
     root.iconCache = {}
   }
@@ -177,46 +166,6 @@ BarWidget {
   readonly property string iconOverridesEffectivePath: {
     var p = root.expandPath(root.iconOverridesPath)
     return p !== "" ? p : (root.home + "/.cache/omarchy/omaspaces-no-icon-overrides.json")
-  }
-
-  readonly property string iconOverridesDir: {
-    var p = root.iconOverridesEffectivePath
-    var slash = p.lastIndexOf("/")
-    return slash > 0 ? p.substring(0, slash) : p
-  }
-
-  // The rules editor writes here. mkdir -p first since the target directory
-  // (a user-typed path, or a first run before ~/.config/omarchy exists) may
-  // not exist yet — FileView.setText() doesn't create parent directories.
-  Process {
-    id: iconOverridesMkdir
-    onExited: iconOverridesFile.setText(JSON.stringify(root.iconOverrideEntries, null, 2) + "\n")
-  }
-
-  function saveIconOverrideEntries(entries) {
-    root.applyIconOverrideEntries(entries)
-    iconOverridesMkdir.command = ["mkdir", "-p", root.iconOverridesDir]
-    iconOverridesMkdir.running = true
-  }
-
-  function addIconOverride(pattern, icon) {
-    var p = String(pattern || "").trim()
-    var i = String(icon || "").trim()
-    if (p === "" || i === "") return false
-    try {
-      new RegExp(p, "i")
-    } catch (e) {
-      return false
-    }
-    root.saveIconOverrideEntries(root.iconOverrideEntries.concat([{ match: p, icon: i }]))
-    return true
-  }
-
-  function removeIconOverride(index) {
-    var next = root.iconOverrideEntries.slice()
-    if (index < 0 || index >= next.length) return
-    next.splice(index, 1)
-    root.saveIconOverrideEntries(next)
   }
 
   FileView {
@@ -236,23 +185,6 @@ BarWidget {
       if (rules[i].re.test(title) || rules[i].re.test(cls)) return rules[i].icon
     }
     return ""
-  }
-
-  // Distinct window classes currently open, across every workspace — feeds
-  // the rules-editor picker so adding a rule doesn't require knowing (or
-  // looking up) an app's exact Hyprland window class by hand.
-  function openAppOptions() {
-    var seen = {}
-    var out = []
-    var tops = Hyprland.toplevels ? Hyprland.toplevels.values : []
-    for (var i = 0; i < tops.length; i++) {
-      var cls = root.toplevelClass(tops[i])
-      if (!cls || seen[cls]) continue
-      seen[cls] = true
-      out.push(cls)
-    }
-    out.sort()
-    return out
   }
 
   function toplevelClass(toplevel) {
@@ -307,17 +239,6 @@ BarWidget {
     return extra > 0 ? glyphs.join(" ") + " +" + extra : glyphs.join(" ")
   }
 
-  function windowTitles(workspace) {
-    if (!workspace) return ""
-    var tops = workspace.toplevels ? workspace.toplevels.values : []
-    var titles = []
-    for (var i = 0; i < tops.length; i++) {
-      var t = root.toplevelTitle(tops[i])
-      if (t) titles.push(t)
-    }
-    return titles.join("\n")
-  }
-
   // Active state is communicated purely through the pill's background — the
   // number itself never changes shape, so a workspace with no matching icon
   // rule (or icons disabled entirely) never renders as a blank,
@@ -333,29 +254,6 @@ BarWidget {
     return parts.join(" ")
   }
 
-  function tooltipFor(workspace) {
-    if (!root.showTooltip) return ""
-    var titles = root.windowTitles(workspace)
-    var hint = "Right-click: icon rules"
-    return titles ? titles + "\n" + hint : hint
-  }
-
-  // -------------------------------------------------------- icon rules editor
-  property bool rulesEditorOpen: false
-  property string rulesEditorPrefill: ""
-
-  function openRulesEditor(workspace) {
-    var tops = workspace && workspace.toplevels ? workspace.toplevels.values : []
-    var cls = tops.length > 0 ? root.toplevelClass(tops[0]) : ""
-    root.rulesEditorPrefill = cls
-    // onOpenChanged only fires on the open/close transition, so re-opening
-    // via a different pill while the popup is already up needs a direct
-    // set here too, or the pattern field would keep showing the first
-    // pill's prefill.
-    if (root.rulesEditorOpen) patternField.text = cls
-    root.rulesEditorOpen = true
-  }
-
   readonly property int focusedId: Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : -1
   readonly property int pillGap: root.compact ? Style.space(2) : Style.space(4)
   readonly property real trailingGap: root.vertical ? 0 : Style.spaceReal(6)
@@ -369,12 +267,12 @@ BarWidget {
     anchors.top: parent.top
     anchors.bottom: root.vertical ? undefined : parent.bottom
     anchors.right: root.vertical ? parent.right : undefined
-    columns: root.vertical ? 1 : Math.max(1, root.visibleWorkspaceIds().length)
+    columns: root.vertical ? 1 : Math.max(1, root.workspaceIds().length)
     columnSpacing: root.vertical ? 0 : root.pillGap
     rowSpacing: root.vertical ? root.pillGap : 0
 
     Repeater {
-      model: root.visibleWorkspaceIds()
+      model: root.workspaceIds()
 
       Rectangle {
         id: pill
@@ -414,147 +312,14 @@ BarWidget {
           active: pill.focused || pill.urgent
           activeColor: pill.urgent ? Color.background : root.accentColor
           dimmed: !pill.occupied && !pill.focused
-          tooltipText: root.tooltipFor(pill.workspace)
           onPressed: function (button) {
             if (button === Qt.LeftButton) root.focusWorkspace(pill.modelData)
-            else if (button === Qt.RightButton) root.openRulesEditor(pill.workspace)
           }
           onWheelMoved: function (delta) { root.switchWorkspace(delta > 0 ? 1 : -1) }
         }
 
         HoverHandler {
           onHoveredChanged: pill.hot = hovered
-        }
-      }
-    }
-  }
-
-  // Right-click any pill to open this: an editor for the icon-overrides
-  // file (see iconOverridesEffectivePath above) so adding or fixing an
-  // icon doesn't require hand-editing JSON. The app picker below is
-  // sourced live from currently open windows purely as a convenience for
-  // filling in the pattern field — the field itself stays a free-text
-  // regex input, so a picked value can still be broadened (e.g. trimmed
-  // down to `firefox` to match every Firefox variant) before saving.
-  PopupCard {
-    id: rulesPopup
-    anchorItem: root
-    bar: root.bar
-    owner: root
-    open: root.rulesEditorOpen
-    contentWidth: fittedContentWidth(Style.space(320))
-    contentHeight: fittedContentHeight(rulesColumn.implicitHeight, Style.space(420))
-
-    function close() { root.rulesEditorOpen = false }
-
-    onOpenChanged: if (open) {
-      patternField.text = root.rulesEditorPrefill
-      iconField.text = ""
-      appPicker.value = ""
-    }
-
-    Column {
-      id: rulesColumn
-      anchors.fill: parent
-      spacing: Style.spacing.lg
-
-      Text {
-        text: "ICON RULES"
-        color: root.bar ? root.bar.barForeground : Color.foreground
-        font.family: root.bar ? root.bar.fontFamily : Style.font.family
-        font.pixelSize: Style.font.subtitle
-        font.bold: true
-      }
-
-      Text {
-        width: parent.width
-        text: "Pick an open app (or type your own pattern below), paste an icon, and add it. Saved to " + root.iconOverridesEffectivePath + " and applied immediately."
-        color: Qt.darker(root.bar ? root.bar.barForeground : Color.foreground, 1.4)
-        font.family: root.bar ? root.bar.fontFamily : Style.font.family
-        font.pixelSize: Style.font.caption
-        wrapMode: Text.WordWrap
-      }
-
-      Dropdown {
-        id: appPicker
-        width: parent.width
-        showLabel: false
-        options: root.rulesEditorOpen ? root.openAppOptions() : []
-        onChanged: function (v) { patternField.text = v }
-      }
-
-      TextField {
-        id: patternField
-        width: parent.width
-        placeholderText: "app pattern (regex), e.g. firefox|zen"
-      }
-
-      Row {
-        width: parent.width
-        spacing: Style.spacing.controlGap
-
-        TextField {
-          id: iconField
-          width: parent.width - addButton.width - parent.spacing
-          placeholderText: "icon glyph"
-        }
-
-        Button {
-          id: addButton
-          text: "Add"
-          bordered: true
-          foreground: root.bar ? root.bar.barForeground : Color.foreground
-          onClicked: {
-            if (root.addIconOverride(patternField.text, iconField.text)) {
-              patternField.text = ""
-              iconField.text = ""
-              appPicker.value = ""
-            }
-          }
-        }
-      }
-
-      PanelSeparator {
-        foreground: root.bar ? root.bar.barForeground : Color.foreground
-      }
-
-      Text {
-        visible: root.iconOverrideEntries.length === 0
-        text: "No custom rules yet."
-        color: Qt.darker(root.bar ? root.bar.barForeground : Color.foreground, 1.4)
-        font.family: root.bar ? root.bar.fontFamily : Style.font.family
-        font.pixelSize: Style.font.caption
-      }
-
-      Column {
-        width: parent.width
-        spacing: Style.spacing.xs
-
-        Repeater {
-          model: root.iconOverrideEntries
-
-          Row {
-            required property var modelData
-            required property int index
-            width: rulesColumn.width
-            spacing: Style.spacing.controlGap
-
-            Text {
-              width: parent.width - removeButton.width - parent.spacing
-              text: modelData.icon + "  " + modelData.match
-              color: root.bar ? root.bar.barForeground : Color.foreground
-              font.family: root.bar ? root.bar.fontFamily : Style.font.family
-              font.pixelSize: Style.font.body
-              elide: Text.ElideRight
-            }
-
-            Button {
-              id: removeButton
-              text: "✕"
-              foreground: root.bar ? root.bar.barForeground : Color.foreground
-              onClicked: root.removeIconOverride(index)
-            }
-          }
         }
       }
     }

@@ -1,122 +1,96 @@
-# Omaspaces
+# Dynamic Omaspaces
 
-Configurable Hyprland workspace indicators for the [Omarchy](https://omarchy.org/) bar: each pill shows the workspace number plus a glyph for every open window's app, with layout, sizing, and icon rules you control.
+Hyprland workspace pills for the [Omarchy](https://omarchy.org/) bar that come and go with your windows. A workspace gets a pill only while it has windows or is focused, and each pill shows a Nerd Font icon for every app open on it.
 
-![preview](preview.png)
+Based on [Omaspaces](https://github.com/DanielLob-o/Omaspaces) by Daniel Lobo.
+
+## How it differs from Omaspaces
+
+- **Dynamic.** No fixed set of empty pills. You see pills only for workspaces that are in use or focused on the focused monitor, so the bar grows and shrinks with what's open.
+- **Bigger icon list.** Built-in icons for a wider range of desktop apps, Steam games, Wine programs, and Omarchy web apps (WhatsApp, YouTube, Gmail, Drive, Maps, Reddit and more), which otherwise all show the Chrome icon.
+- **Simpler.** There's no hover tooltip and no right-click editor. You add custom icons through a JSON file (see below).
 
 ## What you see
 
-- **Pills** — one per workspace, numbered, holding a small glyph for each open
-  window's app (capped, with a `+N` overflow past the limit).
-- **Active state** — the focused (or urgent) workspace gets a soft background
-  fill in your accent color; nothing else changes shape.
-- **Click** a pill to focus that workspace; **scroll** over any pill to step
-  to the next/previous one; **hover** for a tooltip listing that workspace's
-  open window titles; **right-click** to open the icon rules editor.
+- **Pills:** one per workspace in use, with its number and an icon for each open app. Past the limit, the rest fold into `+N`.
+- **Active state:** the focused (or urgent) workspace gets a soft background in your accent color.
+- **Click** a pill to switch to that workspace, or **scroll** over the widget to step through workspaces.
 
 ## Requirements
 
-- Omarchy (Quattro) running on Hyprland
-- A Nerd Font installed and set as the bar font, so app glyphs render
+- Omarchy running on Hyprland
+- A Nerd Font as the bar font, so the app icons render (Omarchy's default JetBrainsMono Nerd Font works)
 
 ## Installation
 
 ```sh
-omarchy plugin add https://github.com/DanielLob-o/Omaspaces.git --enable
-omarchy bar put lobo.omaspaces --section center
+omarchy plugin add https://github.com/murdialthaf/omaspaces.git --enable
+omarchy bar put murdi.omaspaces --section center
 ```
 
-Omarchy's built-in `omarchy.workspaces` widget is often already on the bar
-too, which means you'll see two workspace indicators side by side until you
-disable it:
+If Omarchy's built-in workspaces widget or the original Omaspaces is also on your bar, turn it off so you don't get two rows of workspaces:
 
 ```sh
 omarchy plugin disable omarchy.workspaces
+omarchy plugin disable lobo.omaspaces
 ```
 
 ## Configuration
 
-Omarchy doesn't have a settings-panel GUI for bar widgets yet — set a key
-with `omarchy bar set lobo.omaspaces <key> <value>`, which writes it to the
-widget's entry in `~/.config/omarchy/shell.json` (hand-editing that file
-works too, and hot-reloads on save). Booleans and numbers need `--json`, or
-they're written as plain strings — which for a boolean means `false` (the
-string) is truthy, silently turning the setting *on*:
+Set options with `omarchy bar set murdi.omaspaces <key> <value>`, or edit the widget's entry in `~/.config/omarchy/shell.json` (it reloads on save). Pass `--json` for booleans and numbers. Without it the value is saved as a string, and the string `"false"` counts as true:
 
 ```sh
-omarchy bar set lobo.omaspaces compact true --json
-omarchy bar set lobo.omaspaces workspaceCount 6 --json
+omarchy bar set murdi.omaspaces compact true --json
+omarchy bar set murdi.omaspaces iconLimit 3 --json
 ```
 
-| Setting | Key | Description |
-|---|---|---|
-| Show app icons | `showIcons` | Render a glyph per open window inside its workspace pill |
-| Show workspace numbers | `showNumbers` | Show the workspace number |
-| Base workspace count | `workspaceCount` | Workspaces always shown, even empty |
-| Highest workspace shown | `maxWorkspaceId` | Ceiling for extra workspaces that appear once occupied |
-| Hide empty extra workspaces | `hideEmpty` | Drop (rather than dim) empty workspaces above the base count |
-| Max icons per workspace | `iconLimit` | Caps icons per pill before collapsing into a `+N` |
-| Active color | `accentSource` | `Accent`, `Urgent`, or `Foreground` palette role, shown as a soft background fill on the focused (or urgent) workspace |
-| Compact spacing | `compact` | Tighter padding/gaps between pills |
-| Show window titles on hover | `showTooltip` | Tooltip listing the pill's open window titles |
-| Custom icon rules file | `iconOverridesPath` | Path to the JSON file the icon rules editor (below) reads and writes; defaults to `~/.config/omarchy/omaspaces-icons.json` |
+| Setting | Key | Default | Description |
+|---|---|---|---|
+| Show app icons | `showIcons` | `true` | Draw an icon for each open window inside its pill |
+| Show workspace numbers | `showNumbers` | `true` | Show the workspace number. If icons are also off, numbers show anyway |
+| Max icons per workspace | `iconLimit` | `4` | Icons per pill (1–8) before the rest fold into `+N` |
+| Active color | `accentSource` | `Accent` | `Accent`, `Urgent` or `Foreground`: the theme color used for the focused workspace |
+| Compact spacing | `compact` | `false` | Tighter padding and gaps between pills |
+| Custom icon rules file | `iconOverridesPath` | `~/.config/omarchy/omaspaces-icons.json` | JSON file of your own icon rules (see below) |
 
-### Built-in icon rules
+## Adding your own icons
 
-App-to-icon rules live in `IconRules.js`, split into a small `titleRules`
-list (for apps that need a window title to disambiguate, like browser tabs)
-and a larger `classRules` list (matched and cached by window class). Add or
-reorder entries there and save; the shell hot-reloads plugin QML on change.
-
-### Adding your own icons
-
-**Right-click any workspace pill** to open the icon rules editor — no file
-editing required:
-
-1. Pick an app from the dropdown (populated from your currently open
-   windows), or just type a pattern by hand.
-2. Paste an icon glyph. Grab one from the
-   [Nerd Fonts cheat sheet](https://www.nerdfonts.com/cheat-sheet) — search
-   for the app name, click a glyph to copy it.
-3. Click **Add**. It applies immediately and is saved to the "Custom icon
-   rules file" path above.
-
-![Icon rules editor, adding a DBeaver rule](custom_example.png)
-
-Existing rules are listed below the form with a **✕** to remove them. Since
-these are checked *before* the built-in rules, the editor also doubles as
-the way to replace a built-in icon you don't like.
-
-#### Editing the file directly
-
-The editor is just a UI over a plain JSON file, so you can also hand-edit
-it (or manage it with your own tooling/dotfiles):
+Create the file at `iconOverridesPath`:
 
 ```json
 [
-  { "match": "claude-code|claude", "icon": "" },
+  { "match": "dbeaver", "icon": "󰆼" },
   { "match": "my-internal-app", "icon": "󰀻" }
 ]
 ```
 
-Each entry's `match` is a case-insensitive regular expression tested
-against both the window class and title; the first match in the file wins.
-The file is watched and re-applied automatically whenever it changes — no
-reload or restart needed, whether you edited it by hand or through the
-in-widget editor.
+- `match` is a case-insensitive regular expression, tested against both the window class and the window title.
+- Your rules are checked before the built-in ones, so they can also replace a built-in icon. The first match wins.
+- The widget watches the file and applies changes as soon as you save, with no restart.
 
-If a window's class isn't obvious from the app picker, find it with:
+To find an app's window class, open the app and run:
 
 ```sh
 hyprctl clients | grep -A2 'class:'
 ```
 
+You can copy icons from the [Nerd Fonts cheat sheet](https://www.nerdfonts.com/cheat-sheet).
+
+### Built-in rules
+
+The built-in list is in `IconRules.js` and has two parts:
+
+- `titleRules` match the window title. They're for apps that share one window class across many sites, such as browser tabs.
+- `classRules` match the window class and are cached per class.
+
+Omarchy web apps launched with `omarchy-launch-webapp` get a class like `chrome-web.whatsapp.com__-Default`, so their rules come before the browser rules.
+
 ## Removal
 
 ```sh
-omarchy plugin remove lobo.omaspaces
+omarchy plugin remove murdi.omaspaces
 ```
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE). Original work © Daniel Lobo.
