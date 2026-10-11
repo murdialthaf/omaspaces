@@ -4,6 +4,8 @@ Hyprland workspace pills for the [Omarchy](https://omarchy.org/) bar that come a
 
 Based on [Omaspaces](https://github.com/DanielLob-o/Omaspaces) by Daniel Lobo.
 
+![Dynamic Omaspaces in the Omarchy bar](preview.png)
+
 ## How it differs from Omaspaces
 
 - **Dynamic.** No fixed set of empty pills. You see pills only for workspaces that are in use or focused on the focused monitor, so the bar grows and shrinks with what's open.
